@@ -45,6 +45,9 @@ def svm_loss_naive(W, X, y, reg):
 
   # Add regularization to the loss.
   loss += 0.5 * reg * np.sum(W * W)
+  for k in range(W.shape[0]):
+    for l in range(W.shape[1]):
+      dW[k, l] += reg * W[k, l] ###
 
   #############################################################################
   # TODO:                                                                     #

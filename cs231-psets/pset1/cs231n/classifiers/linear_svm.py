@@ -78,11 +78,10 @@ def svm_loss_vectorized(W, X, y, reg):
     # result in loss.                                                           #
     #############################################################################
     scores = X.dot(W)
-    num_train = X.shape[0]
-    image_dim = X.shape[1]
-    index_correct = np.arange(num_train), y
+    N = X.shape[0]
+    index_correct = np.arange(N), y
 
-    margins = np.maximum(0, scores - scores[index_correct].reshape(num_train, 1) + 1)
+    margins = np.maximum(0, scores - scores[index_correct].reshape(N, 1) + 1)
     margins[index_correct] = 0
     loss += np.sum(margins)
 
@@ -93,7 +92,7 @@ def svm_loss_vectorized(W, X, y, reg):
     #   margins[y[i]] = 0
     #   loss += np.sum(margins[margins > 0])
 
-    loss /= num_train
+    loss /= N
 
     loss += 0.5 * reg * np.sum(W ** 2)
     #############################################################################
@@ -109,11 +108,10 @@ def svm_loss_vectorized(W, X, y, reg):
     # to reuse some of the intermediate values that you used to compute the     #
     # loss.                                                                     #
     #############################################################################
-    margins_bin = margins > 0
-    dW += X.T.dot(margins_bin) / num_train
-
-    print X.T.shape, np.sum(margins_bin, axis=1).shape, (X.T.dot(np.sum(margins_bin, axis=1))).shape
-    # dW[np.arange(image_dim), y] -= X.T.dot(np.sum(margins_bin, axis=1, keepdims=True)) / num_train
+    margins_bin = np.zeros_like(margins)
+    margins_bin[margins > 0] = 1
+    margins_bin[index_correct] -= np.sum(margins_bin, axis=1)
+    dW += X.T.dot(margins_bin) / N
 
     dW += reg * W
     #############################################################################

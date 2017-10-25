@@ -39,7 +39,6 @@ def softmax_loss_naive(W, X, y, reg):
         denom = np.sum(np.exp(scores))
         for j in range(C):
             pj = np.exp(scores[j]) / denom
-            # if i == 1: print pj
             if j == y[i]:
                 dW[:, j] += (pj - 1) * X[i]
             else:
@@ -75,7 +74,15 @@ def softmax_loss_vectorized(W, X, y, reg):
     # here, it is easy to run into numeric instability. Don't forget the        #
     # regularization!                                                           #
     #############################################################################
-    pass
+    N, C = X.shape[0], W.shape[1]
+    scores = X.dot(W)  # (N, C)
+    scores -= np.max(scores)  # numerical stability (see pp. 16-17 of LC notes)
+    correct_score = scores[range(N), y]  # (N,)
+
+    denom = np.sum(np.exp(scores), axis=1)  # (N,)
+    print 'denom.shape =', denom.shape
+    loss -= np.sum(np.log(np.exp(correct_score) / denom))  # term inside sum: (N,)
+    loss /= N
     #############################################################################
     #                          END OF YOUR CODE                                 #
     #############################################################################

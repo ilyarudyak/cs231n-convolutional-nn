@@ -80,9 +80,14 @@ def softmax_loss_vectorized(W, X, y, reg):
     correct_score = scores[range(N), y]  # (N,)
 
     denom = np.sum(np.exp(scores), axis=1)  # (N,)
-    print 'denom.shape =', denom.shape
     loss -= np.sum(np.log(np.exp(correct_score) / denom))  # term inside sum: (N,)
     loss /= N
+
+    pj = np.exp(scores) / denom.reshape(N, 1)  # (N, C)
+    pj[range(N), y] -= 1
+    dW += X.T.dot(pj)  # (D, N).dot(N, C) = (D, C)
+    dW /= N
+
     #############################################################################
     #                          END OF YOUR CODE                                 #
     #############################################################################

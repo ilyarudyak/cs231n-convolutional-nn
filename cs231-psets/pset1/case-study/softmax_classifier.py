@@ -6,6 +6,7 @@ class SoftmaxClassifier(object):
     def __init__(self):
         self.W = None
         self.b = None
+        self.L = None
 
     def train(self, X, y, step_size=1e-0, reg=1e-3, num_iters=200):
 
@@ -13,6 +14,8 @@ class SoftmaxClassifier(object):
             self.W = 0.01 * np.random.randn(X.shape[1], np.max(y) + 1)
         if self.b is None:
             self.b = np.zeros((1, np.max(y) + 1))
+        if self.L is None:
+            self.L = np.zeros((num_iters / 10, 2))
 
         num_examples = X.shape[0]
         for i in range(num_iters):
@@ -29,6 +32,8 @@ class SoftmaxClassifier(object):
             reg_loss = 0.5 * reg * np.sum(self.W * self.W)
             loss = data_loss + reg_loss
             if i % 10 == 0:
+                self.L[i / 10, 0] = i
+                self.L[i / 10, 1] = loss
                 print "iteration %d: loss %f" % (i, loss)
 
             # compute the gradient on scores

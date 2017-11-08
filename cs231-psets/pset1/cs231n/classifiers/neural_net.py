@@ -113,13 +113,13 @@ class TwoLayerNet(object):
         dscores /= N
 
         grads['W2'] = np.dot(hidden_layer.T, dscores)
-        grads['b2'] = np.sum(dscores, axis=0, keepdims=True)
+        grads['b2'] = np.sum(dscores, axis=0)
 
         dhidden = np.dot(dscores, W2.T)
         dhidden[hidden_layer <= 0] = 0
 
         grads['W1'] = np.dot(X.T, dhidden)
-        grads['b1'] = np.sum(dhidden, axis=0, keepdims=True)
+        grads['b1'] = np.sum(dhidden, axis=0)
 
         grads['W2'] += reg * W2
         grads['W1'] += reg * W1
@@ -134,22 +134,23 @@ class TwoLayerNet(object):
               reg=1e-5, num_iters=100,
               batch_size=200, verbose=False):
         """
-    Train this neural network using stochastic gradient descent.
+        Train this neural network using stochastic gradient descent.
 
-    Inputs:
-    - X: A numpy array of shape (N, D) giving training data.
-    - y: A numpy array f shape (N,) giving training labels; y[i] = c means that
-      X[i] has label c, where 0 <= c < C.
-    - X_val: A numpy array of shape (N_val, D) giving validation data.
-    - y_val: A numpy array of shape (N_val,) giving validation labels.
-    - learning_rate: Scalar giving learning rate for optimization.
-    - learning_rate_decay: Scalar giving factor used to decay the learning rate
-      after each epoch.
-    - reg: Scalar giving regularization strength.
-    - num_iters: Number of steps to take when optimizing.
-    - batch_size: Number of training examples to use per step.
-    - verbose: boolean; if true print progress during optimization.
-    """
+        Inputs:
+        - X: A numpy array of shape (N, D) giving training data.
+        - y: A numpy array f shape (N,) giving training labels; y[i] = c means that
+          X[i] has label c, where 0 <= c < C.
+        - X_val: A numpy array of shape (N_val, D) giving validation data.
+        - y_val: A numpy array of shape (N_val,) giving validation labels.
+        - learning_rate: Scalar giving learning rate for optimization.
+        - learning_rate_decay: Scalar giving factor used to decay the learning rate
+          after each epoch.
+        - reg: Scalar giving regularization strength.
+        - num_iters: Number of steps to take when optimizing.
+        - batch_size: Number of training examples to use per step.
+        - verbose: boolean; if true print progress during optimization.
+        """
+
         num_train = X.shape[0]
         iterations_per_epoch = max(num_train / batch_size, 1)
 
@@ -159,14 +160,13 @@ class TwoLayerNet(object):
         val_acc_history = []
 
         for it in xrange(num_iters):
-            X_batch = None
-            y_batch = None
 
             #########################################################################
             # TODO: Create a random minibatch of training data and labels, storing  #
             # them in X_batch and y_batch respectively.                             #
             #########################################################################
-            pass
+            index = np.random.choice(np.arange(num_train), batch_size)
+            X_batch, y_batch = X[index], y[index]
             #########################################################################
             #                             END OF YOUR CODE                          #
             #########################################################################
@@ -181,7 +181,10 @@ class TwoLayerNet(object):
             # using stochastic gradient descent. You'll need to use the gradients   #
             # stored in the grads dictionary defined above.                         #
             #########################################################################
-            pass
+            self.params['W2'] -= learning_rate * grads['W2']
+            self.params['b2'] -= learning_rate * grads['b2']
+            self.params['W1'] -= learning_rate * grads['W1']
+            self.params['b1'] -= learning_rate * grads['b1']
             #########################################################################
             #                             END OF YOUR CODE                          #
             #########################################################################
@@ -192,8 +195,8 @@ class TwoLayerNet(object):
             # Every epoch, check train and val accuracy and decay learning rate.
             if it % iterations_per_epoch == 0:
                 # Check accuracy
-                train_acc = (self.predict(X_batch) == y_batch).mean()
-                val_acc = (self.predict(X_val) == y_val).mean()
+                train_acc = np.sum(self.predict(X_batch) == y_batch) / batch_size
+                val_acc = np.sum(self.predict(X_val) == y_val) / X_val.shape[0]
                 train_acc_history.append(train_acc)
                 val_acc_history.append(val_acc)
 
@@ -221,14 +224,13 @@ class TwoLayerNet(object):
           the elements of X. For all i, y_pred[i] = c means that X[i] is predicted
           to have class c, where 0 <= c < C.
         """
-        y_pred = None
-
         ###########################################################################
         # TODO: Implement this function; it should be VERY simple!                #
         ###########################################################################
-        pass
+        hidden_layer = np.maximum(0, np.dot(X, self.params['W1']) + self.params['b1'])
+        scores = np.dot(hidden_layer, self.params['W2']) + self.params['b2']
         ###########################################################################
         #                              END OF YOUR CODE                           #
         ###########################################################################
 
-        return y_pred
+        return np.argmax(scores, axis=1)

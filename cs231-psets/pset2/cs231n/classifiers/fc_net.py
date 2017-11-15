@@ -1,7 +1,7 @@
 import numpy as np
 
-from pset2.cs231n.layers import *
-from pset2.cs231n.layer_utils import *
+from cs231n.layers import *
+from cs231n.layer_utils import *
 
 
 class TwoLayerNet(object):
@@ -36,6 +36,7 @@ class TwoLayerNet(object):
         """
         self.params = {}
         self.reg = reg
+        self.cache = {}
 
         ############################################################################
         # TODO: Initialize the weights and biases of the two-layer net. Weights    #
@@ -77,7 +78,8 @@ class TwoLayerNet(object):
         # TODO: Implement the forward pass for the two-layer net, computing the    #
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
-        pass
+        hidden, self.cache['hidden'] = affine_relu_forward(X, self.params['W1'], self.params['b1'])
+        scores, self.cache['out'] = affine_forward(hidden, self.params['W2'], self.params['b2'])
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -97,11 +99,16 @@ class TwoLayerNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        pass
+        loss, dout = softmax_loss(scores, y)
+        dout, grads['W2'], grads['b2'] = affine_backward(dout, self.cache['out'])
+        _, grads['W1'], grads['b1'] = affine_relu_backward(dout, self.cache['hidden'])
+
+        loss += 0.5 * self.reg * np.sum(self.params['W1'] ** 2) + 0.5 * self.reg * np.sum(self.params['W2'] ** 2)
+        grads['W2'] += self.reg * self.params['W2']
+        grads['W1'] += self.reg * self.params['W1']
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
-
         return loss, grads
 
 

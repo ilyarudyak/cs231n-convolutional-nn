@@ -1,0 +1,15 @@
+Fully-Connected Neural Nets
+
+    - Affine layer: foward
+    - Affine layer: backward
+    - ReLU layer: forward
+    - ReLU layer: backward
+    - "Sandwich" layers
+    - Loss layers: Softmax and SVM
+
+    - Two-layer network
+    - Solver
+    - Multilayer network
+
+    - SGD+Momentum
+    - RMSProp and Adam

@@ -509,6 +509,19 @@ def spatial_batchnorm_backward(dout, cache):
     return dx, dgamma, dbeta
 
 
+def svm_loss2(x, y):
+    N, C = x.shape
+    Li = np.maximum(0, x - x[np.arange(N), y].reshape(N, 1) + 1)
+    Li[np.arange(N), y] = 0
+    L = np.sum(Li) / N
+
+    dL = np.zeros(Li.shape)
+    dL[Li > 0] = 1
+    dL[np.arange(N), y] -= np.sum(dL, axis=1)
+    # dL /= N
+    return L, dL
+
+
 def svm_loss(x, y):
     """
     Computes the loss and gradient using for multiclass SVM classification.

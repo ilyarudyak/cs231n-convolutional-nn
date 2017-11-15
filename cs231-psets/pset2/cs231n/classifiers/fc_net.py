@@ -154,7 +154,7 @@ class FullyConnectedNet(object):
         self.use_batchnorm = use_batchnorm
         self.use_dropout = dropout > 0
         self.reg = reg
-        self.num_layers = 1 + len(hidden_dims)
+        self.num_layers = 1 + len(hidden_dims)  # L layers = L-1 hidden and output
         self.dtype = dtype
         self.params = {}
 
@@ -170,7 +170,16 @@ class FullyConnectedNet(object):
         # beta2, etc. Scale parameters should be initialized to one and shift      #
         # parameters should be initialized to zero.                                #
         ############################################################################
-        pass
+        L = self.num_layers
+        self.params['W1'] = weight_scale * np.random.randn(input_dim, hidden_dims[0])
+        self.params['b1'] = np.zeros(hidden_dims[0])
+
+        for i in range(2, L):
+            self.params['W' + str(i)] = weight_scale * np.random.randn(hidden_dims[i-2], hidden_dims[i-1])
+            self.params['b' + str(i)] = np.zeros(hidden_dims[i-1])
+
+        self.params['W' + str(L)] = weight_scale * np.random.randn(hidden_dims[L-2], num_classes)
+        self.params['b' + str(L)] = np.zeros(num_classes)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################

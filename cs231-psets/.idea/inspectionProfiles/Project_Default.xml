@@ -5,6 +5,8 @@
       <option name="ignoredErrors">
         <list>
           <option value="N806" />
+          <option value="N802" />
+          <option value="N803" />
         </list>
       </option>
     </inspection_tool>
@@ -12,6 +14,9 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="pset2.cs231n.classifiers.fc_net.*" />
+          <option value="pset2.cs231n.layer_utils.cs231n" />
+          <option value="pset2.cs231n.layer_utils.affine_forward" />
+          <option value="pset2.cs231n.layer_utils.*" />
         </list>
       </option>
     </inspection_tool>

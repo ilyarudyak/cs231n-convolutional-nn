@@ -30,6 +30,39 @@ def affine_relu_backward(dout, cache):
     return dx, dw, db
 
 
+def affine_relu_dropout_forward(x, w, b, dropout_params):
+    """
+    Convenience layer that combines affine transform, ReLU and drop-out
+
+    Inputs:
+    - x: Input to the affine layer
+    - w, b: Weights for the affine layer
+    - dropout_params: A dictionary with the following keys:
+        - p: Dropout parameter. We drop each neuron output with probability p.
+        - mode: 'test' or 'train'. If the mode is train, then perform dropout;
+      if the mode is test, then just return the input.
+        - seed: Seed for the random number generator. Passing seed makes this
+        function deterministic, which is needed for gradient checking but not in
+        real networks.
+    Returns a tuple of:
+    - out: Output from the drop out layer
+    - cache: Object to give to the backward pass
+    """
+    ar, relu_cache = affine_relu_forward(x, w, b)
+    out, dropout_cache = dropout_forward(ar, dropout_params)
+    cache = (fc_cache, relu_cache, dropout_cache)
+    return out, cache
+
+
+def affine_relu_dropout_backward(dout, cache):
+    """
+    Backwardpass for the affine-ReLU-dropout convenience layer
+    """
+    fc_cache, relu_cache, dropout_cache = cache
+    dout = dropout_backward(dout, dropout_cache)
+    return affine_relu_backward(dout, (fc_cache, relu_cache))
+
+
 def conv_relu_forward(x, w, b, conv_param):
     """
   A convenience layer that performs a convolution followed by a ReLU.

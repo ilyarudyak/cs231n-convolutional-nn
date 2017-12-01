@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def affine_forward(x, w, b):
+def affine_forward(x, w, b, *args):
     """
     Computes the forward pass for an affine (fully-connected) layer.
 

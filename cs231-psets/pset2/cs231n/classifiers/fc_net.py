@@ -157,7 +157,7 @@ class FullyConnectedNet(object):
         self.use_batchnorm = use_batchnorm
         self.use_dropout = dropout > 0
         self.reg = reg
-        self.num_layers = 1 + len(hidden_dims)  # L layers = L-1 hidden and output
+        self.L = 1 + len(hidden_dims)  # L layers = L-1 hidden and output
         self.dtype = dtype
         self.params = {}
         self.cache = {}
@@ -174,7 +174,7 @@ class FullyConnectedNet(object):
         # beta2, etc. Scale parameters should be initialized to one and shift      #
         # parameters should be initialized to zero.                                #
         ############################################################################
-        L = self.num_layers
+        L = self.L
         self.params['W1'] = weight_scale * np.random.randn(input_dim, hidden_dims[0])
         self.params['b1'] = np.zeros(hidden_dims[0])
 
@@ -191,11 +191,11 @@ class FullyConnectedNet(object):
         # When using dropout we need to pass a dropout_param dictionary to each
         # dropout layer so that the layer knows the dropout probability and the mode
         # (train / test). You can pass the same dropout_param to each dropout layer.
-        self.dropout_param = {}
+        self.dropout_params = {}
         if self.use_dropout:
-            self.dropout_param = {'mode': 'train', 'p': dropout}
+            self.dropout_params = {'mode': 'train', 'p': dropout}
             if seed is not None:
-                self.dropout_param['seed'] = seed
+                self.dropout_params['seed'] = seed
 
         # With batch normalization we need to keep track of running means and
         # variances, so we need to pass a special bn_param object to each batch
@@ -204,16 +204,19 @@ class FullyConnectedNet(object):
         # pass of the second batch normalization layer, etc.
         self.bn_params = []
         if self.use_batchnorm:
-            self.bn_params = [{'mode': 'train'} for i in xrange(self.num_layers - 1)]
+            self.bn_params = [{'mode': 'train'} for i in xrange(self.L - 1)]
 
         # Cast all parameters to the correct datatype
         for k, v in self.params.iteritems():
             self.params[k] = v.astype(dtype)
 
+        self.activations = {}
+        self.grads = {}
+        self.loss_val = 0.0
+
     def loss(self, X, y=None):
         """
         Compute loss and gradient for the fully-connected net.
-
         Input / output: Same as TwoLayerNet above.
         """
         X = X.astype(self.dtype)
@@ -221,8 +224,8 @@ class FullyConnectedNet(object):
 
         # Set train/test mode for batchnorm params and dropout param since they
         # behave differently during training and testing.
-        if self.dropout_param is not None:
-            self.dropout_param['mode'] = mode
+        if self.dropout_params is not None:
+            self.dropout_params['mode'] = mode
         if self.use_batchnorm:
             for bn_param in self.bn_params:
                 bn_param[mode] = mode
@@ -240,15 +243,21 @@ class FullyConnectedNet(object):
         # self.bn_params[1] to the forward pass for the second batch normalization #
         # layer, etc.                                                              #
         ############################################################################
-        L = self.num_layers
-        hidden, self.cache['layer1'] = affine_relu_forward(X, self.params['W1'], self.params['b1'])
+        # code without dropout
+        # L = self.num_layers
+        # hidden, self.cache['layer1'] = affine_relu_forward(X, self.params['W1'], self.params['b1'])
+        #
+        # for i in range(2, L):
+        #     hidden, self.cache['layer' + str(i)] = \
+        #         affine_relu_forward(hidden, self.params['W' + str(i)], self.params['b' + str(i)])
+        #
+        # scores, self.cache['layer' + str(L)] = \
+        #     affine_forward(hidden, self.params['W' + str(L)], self.params['b' + str(L)])
 
-        for i in range(2, L):
-            hidden, self.cache['layer' + str(i)] = \
-                affine_relu_forward(hidden, self.params['W' + str(i)], self.params['b' + str(i)])
-
-        scores, self.cache['layer' + str(L)] = \
-            affine_forward(hidden, self.params['W' + str(L)], self.params['b' + str(L)])
+        # code with dropout but without batch norm
+        self.activations['a0'] = X
+        self.forward_prop()
+        scores = self.activations['a' + str(self.L)]
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -257,7 +266,6 @@ class FullyConnectedNet(object):
         if mode == 'test':
             return scores
 
-        loss, grads = 0.0, {}
         ############################################################################
         # TODO: Implement the backward pass for the fully-connected net. Store the #
         # loss in the loss variable and gradients in the grads dictionary. Compute #
@@ -271,20 +279,50 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        loss, dout = softmax_loss(scores, y)
-
-        dout, grads['W' + str(L)], grads['b' + str(L)] = affine_backward(dout, self.cache['layer' + str(L)])
-
-        for i in reversed(range(1, L)):
-            dout, grads['W' + str(i)], grads['b' + str(i)] = \
-                affine_relu_backward(dout, self.cache['layer' + str(i)])
-
-        for i in range(1, L+1):
-            loss += .5 * self.reg * np.sum(self.params['W' + str(i)] ** 2)
-            grads['W' + str(i)] += self.reg * self.params['W' + str(i)]
+        self.backward_prop(y)
+        self.add_regularization()
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
 
-        return loss, grads
+        return self.loss_val, self.grads
 
+    def forward_prop(self):
+        forward_function = None
+        if self.use_batchnorm and self.use_dropout:
+            pass
+        elif not self.use_batchnorm and self.use_dropout:
+            forward_function = affine_relu_dropout_forward
+        else:
+            forward_function = affine_relu_forward
+
+        for l in range(1, self.L+1):
+            if l == self.L:
+                forward_function = affine_forward
+
+            self.activations['a' + str(l)], self.cache['layer' + str(l)] = forward_function(
+                self.activations['a' + str(l - 1)], self.params['W' + str(l)],
+                self.params['b' + str(l)], self.dropout_params)
+
+    def backward_prop(self, y):
+        backward_function = None
+        if self.use_batchnorm and self.use_dropout:
+            pass
+        elif not self.use_batchnorm and self.use_dropout:
+            backward_function = affine_relu_dropout_backward
+        else:
+            backward_function = affine_relu_backward
+
+        scores = self.activations['a' + str(self.L)]
+        self.loss_val, dout = softmax_loss(scores, y)
+        dout, self.grads['W' + str(self.L)], self.grads['b' + str(self.L)] = \
+            affine_backward(dout, self.cache['layer' + str(self.L)])
+
+        for l in reversed(range(1, self.L)):
+            dout, self.grads['W' + str(l)], self.grads['b' + str(l)] = \
+                backward_function(dout, self.cache['layer' + str(l)])
+
+    def add_regularization(self):
+        for l in range(1, self.L+1):
+            self.loss_val += .5 * self.reg * np.sum(self.params['W' + str(l)] ** 2)
+            self.grads['W' + str(l)] += self.reg * self.params['W' + str(l)]

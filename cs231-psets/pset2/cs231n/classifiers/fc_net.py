@@ -296,10 +296,11 @@ class FullyConnectedNet(object):
         return self.loss_val, self.grads
 
     def forward_prop(self):
-        forward_function = None
         if self.use_batchnorm and self.use_dropout:
-            pass
-        elif not self.use_batchnorm and self.use_dropout:
+            forward_function = affine_batchnorm_relu_dropout_forward
+        elif self.use_batchnorm:
+            forward_function = affine_batchnorm_relu_forward
+        elif self.use_dropout:
             forward_function = affine_relu_dropout_forward
         else:
             forward_function = affine_relu_forward
@@ -308,15 +309,20 @@ class FullyConnectedNet(object):
             if l == self.L:
                 forward_function = affine_forward
 
+            gamma, beta = None, None
+            if self.use_batchnorm:
+                gamma, beta = self.params['gamma' + str(i)], self.params['beta' + str(i)]
+
             self.activations['a' + str(l)], self.cache['layer' + str(l)] = forward_function(
                 self.activations['a' + str(l - 1)], self.params['W' + str(l)],
-                self.params['b' + str(l)], self.dropout_params)
+                self.params['b' + str(l)], gamma, beta, self.bn_params, self.dropout_params)
 
     def backward_prop(self, y):
-        backward_function = None
         if self.use_batchnorm and self.use_dropout:
-            pass
-        elif not self.use_batchnorm and self.use_dropout:
+            backward_function = affine_batchnorm_relu_dropout_backward
+        elif self.use_batchnorm:
+            backward_function = affine_batchnorm_relu_backward
+        elif self.use_dropout:
             backward_function = affine_relu_dropout_backward
         else:
             backward_function = affine_relu_backward

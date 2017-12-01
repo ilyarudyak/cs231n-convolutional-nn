@@ -185,7 +185,6 @@ class FullyConnectedNet(object):
         for i in range(2, L):
             self.params['W' + str(i)] = weight_scale * np.random.randn(hidden_dims[i - 2], hidden_dims[i - 1])
             self.params['b' + str(i)] = np.zeros(hidden_dims[i - 1])
-
             if self.use_batchnorm:
                 self.params['gamma' + str(i)] = np.ones(hidden_dims[i - 1])
                 self.params['beta' + str(i)] = np.zeros(hidden_dims[i - 1])
@@ -210,9 +209,9 @@ class FullyConnectedNet(object):
         # normalization layer. You should pass self.bn_params[0] to the forward pass
         # of the first batch normalization layer, self.bn_params[1] to the forward
         # pass of the second batch normalization layer, etc.
-        self.bn_params = []
+        self.bn_param = None
         if self.use_batchnorm:
-            self.bn_params = [{'mode': 'train'} for i in xrange(self.L - 1)]
+            self.bn_param = [{'mode': 'train'} for _ in xrange(self.L - 1)]
 
         # Cast all parameters to the correct datatype
         for k, v in self.params.iteritems():
@@ -235,7 +234,7 @@ class FullyConnectedNet(object):
         if self.dropout_params is not None:
             self.dropout_params['mode'] = mode
         if self.use_batchnorm:
-            for bn_param in self.bn_params:
+            for bn_param in self.bn_param:
                 bn_param[mode] = mode
 
         scores = None
@@ -309,13 +308,15 @@ class FullyConnectedNet(object):
             if l == self.L:
                 forward_function = affine_forward
 
-            gamma, beta = None, None
-            if self.use_batchnorm:
-                gamma, beta = self.params['gamma' + str(i)], self.params['beta' + str(i)]
+            if self.use_batchnorm and l < self.L:
+                gamma, beta = self.params['gamma' + str(l)], self.params['beta' + str(l)]
+                bn_param = self.bn_param[l - 1]
+            else:
+                gamma, beta, bn_param = None, None, None
 
             self.activations['a' + str(l)], self.cache['layer' + str(l)] = forward_function(
                 self.activations['a' + str(l - 1)], self.params['W' + str(l)],
-                self.params['b' + str(l)], gamma, beta, self.bn_params, self.dropout_params)
+                self.params['b' + str(l)], gamma, beta, bn_param, self.dropout_params)
 
     def backward_prop(self, y):
         if self.use_batchnorm and self.use_dropout:
@@ -333,8 +334,13 @@ class FullyConnectedNet(object):
             affine_backward(dout, self.cache['layer' + str(self.L)])
 
         for l in reversed(range(1, self.L)):
-            dout, self.grads['W' + str(l)], self.grads['b' + str(l)] = \
-                backward_function(dout, self.cache['layer' + str(l)])
+            if self.use_batchnorm:
+                dout, self.grads['W' + str(l)], self.grads['b' + str(l)], \
+                    self.grads['gamma' + str(l)], self.grads['beta' + str(l)] = \
+                    backward_function(dout, self.cache['layer' + str(l)])
+            else:
+                dout, self.grads['W' + str(l)], self.grads['b' + str(l)] = \
+                    backward_function(dout, self.cache['layer' + str(l)])
 
     def add_regularization(self):
         for l in range(1, self.L + 1):

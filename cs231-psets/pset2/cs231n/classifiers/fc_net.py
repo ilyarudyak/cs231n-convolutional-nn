@@ -178,9 +178,17 @@ class FullyConnectedNet(object):
         self.params['W1'] = weight_scale * np.random.randn(input_dim, hidden_dims[0])
         self.params['b1'] = np.zeros(hidden_dims[0])
 
+        if self.use_batchnorm:
+            self.params['gamma1'] = np.ones(hidden_dims[0])
+            self.params['beta1'] = np.zeros(hidden_dims[0])
+
         for i in range(2, L):
             self.params['W' + str(i)] = weight_scale * np.random.randn(hidden_dims[i - 2], hidden_dims[i - 1])
             self.params['b' + str(i)] = np.zeros(hidden_dims[i - 1])
+
+            if self.use_batchnorm:
+                self.params['gamma' + str(i)] = np.ones(hidden_dims[i - 1])
+                self.params['beta' + str(i)] = np.zeros(hidden_dims[i - 1])
 
         self.params['W' + str(L)] = weight_scale * np.random.randn(hidden_dims[L - 2], num_classes)
         self.params['b' + str(L)] = np.zeros(num_classes)
@@ -296,7 +304,7 @@ class FullyConnectedNet(object):
         else:
             forward_function = affine_relu_forward
 
-        for l in range(1, self.L+1):
+        for l in range(1, self.L + 1):
             if l == self.L:
                 forward_function = affine_forward
 
@@ -323,6 +331,6 @@ class FullyConnectedNet(object):
                 backward_function(dout, self.cache['layer' + str(l)])
 
     def add_regularization(self):
-        for l in range(1, self.L+1):
+        for l in range(1, self.L + 1):
             self.loss_val += .5 * self.reg * np.sum(self.params['W' + str(l)] ** 2)
             self.grads['W' + str(l)] += self.reg * self.params['W' + str(l)]

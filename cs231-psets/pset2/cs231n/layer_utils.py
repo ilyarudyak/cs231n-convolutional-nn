@@ -30,6 +30,36 @@ def affine_relu_backward(dout, cache):
     return dx, dw, db
 
 
+def affine_batchnorm_relu_forward(x, w, b, gamma, beta, bn_params):
+  """
+  Convenience layer that combines affine transform, batch normalization and ReLU
+
+  Inputs:
+  - x: Input to the affine layer
+  - w, b: Weights for the affine layer
+  - gamma, beta: Weights for the normalization layer
+  Returns a tuple of:
+  - out: Output from the ReLU
+  - cache: Object to give to the backward pass
+  """
+  a1, fc_cache = affine_forward(x, w, b)
+  a2, bn_cache = batchnorm_forward(a1, gamma, beta, bn_params)
+  out, relu_cache = relu_forward(a2)
+  cache = (fc_cache, bn_cache, relu_cache)
+  return out, cache
+
+
+def affine_batchnorm_relu_backward(dout, cache):
+  """
+  Backwardpass for the affine-norm-ReLU convenience layer
+  """
+  fc_cache, bn_cache, relu_cache = cache
+  da2 = relu_backward(dout, relu_cache)
+  da1, dgamma, dbeta = batchnorm_backward(da2, bn_cache)
+  dx, dw, db = affine_backward(da1, fc_cache)
+  return dx, dw, db, dgamma, dbeta
+
+
 def affine_relu_dropout_forward(x, w, b, dropout_params):
     """
     Convenience layer that combines affine transform, ReLU and drop-out
@@ -62,6 +92,41 @@ def affine_relu_dropout_backward(dout, cache):
     da = dropout_backward(dout, dropout_cache)
     dx, dw, db = affine_relu_backward(da, (fc_cache, relu_cache))
     return dx, dw, db
+
+
+def affine_batchnorm_relu_dropout_forward(x, w, b, gamma, beta, bn_params, dropout_params):
+  """
+  Convenience layer that combines affine transform, batch normalization, ReLU and drop-out
+
+  Inputs:
+  - x: Input to the affine layer
+  - w, b: Weights for the affine layer
+  - gamma, beta: Weights for the normalization layer
+  - dropout_params: A dictionary with the following keys:
+    - p: Dropout parameter. We drop each neuron output with probability p.
+    - mode: 'test' or 'train'. If the mode is train, then perform dropout;
+      if the mode is test, then just return the input.
+    - seed: Seed for the random number generator. Passing seed makes this
+      function deterministic, which is needed for gradient checking but not in
+      real networks.
+  Returns a tuple of:
+  - out: Output from the drop out layer
+  - cache: Object to give to the backward pass
+  """
+  a, (fc_cache, bn_cache, relu_cache) = affine_batchnorm_relu_forward(x, w, b, gamma, beta, bn_params)
+  out, dropout_cache = dropout_forward(a, dropout_params)
+  cache = (fc_cache, bn_cache, relu_cache, dropout_cache)
+  return out, cache
+
+
+def affine_batchnorm_relu_dropout_backward(dout, cache):
+  """
+  Backwardpass for the affine-batchnorm-ReLU-dropout convenience layer
+  """
+  fc_cache, bn_cache, relu_cache, dropout_cache = cache
+  da = dropout_backward(dout, dropout_cache)
+  dx, dw, db, dgamma, dbeta = affine_batchnorm_relu_backward(da, (fc_cache, bn_cache, relu_cache))
+  return dx, dw, db, dgamma, dbeta
 
 
 def conv_relu_forward(x, w, b, conv_param):

@@ -349,6 +349,9 @@ def dropout_backward(dout, cache):
     return dx
 
 
+######## convolutional layers ##############
+
+
 def conv_forward_naive(x, w, b, conv_param):
     """
     A naive implementation of the forward pass for a convolutional layer.
@@ -372,12 +375,25 @@ def conv_forward_naive(x, w, b, conv_param):
       W' = 1 + (W + 2 * pad - WW) / stride
     - cache: (x, w, b, conv_param)
     """
-    out = None
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+    H_out = 1 + (H + 2 * pad - HH) / stride
+    W_out = 1 + (W + 2 * pad - WW) / stride
+    out = np.zeros((N, F, H_out, W_out))
+    x_pad = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), mode='constant')
     #############################################################################
     # TODO: Implement the convolutional forward pass.                           #
     # Hint: you can use the function np.pad for padding.                        #
     #############################################################################
-    pass
+    for n in range(N):
+        for f in range(F):
+            for ho in range(H_out):
+                for wo in range(W_out):
+                    out[n, f, ho, wo] = \
+                        np.sum(x_pad[n, :, (ho * stride):(ho * stride + HH),
+                               (wo * stride):(wo * stride + WW)] * w[f, :, :, :]) + b[f]
     #############################################################################
     #                             END OF YOUR CODE                              #
     #############################################################################
@@ -456,6 +472,9 @@ def max_pool_backward_naive(dout, cache):
     #                             END OF YOUR CODE                              #
     #############################################################################
     return dx
+
+
+######## convolutional layers ##############
 
 
 def spatial_batchnorm_forward(x, gamma, beta, bn_param):

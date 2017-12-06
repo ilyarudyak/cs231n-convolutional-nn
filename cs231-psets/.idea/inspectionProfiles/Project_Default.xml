@@ -25,6 +25,7 @@
           <option value="pset2.cs231n.layer_utils.cs231n" />
           <option value="pset2.cs231n.layer_utils.affine_forward" />
           <option value="pset2.cs231n.layer_utils.*" />
+          <option value="pset2.cs231n.classifiers.cnn.*" />
         </list>
       </option>
     </inspection_tool>

@@ -1,8 +1,8 @@
 import numpy as np
 
-from pset2.cs231n.layers import *
-from pset2.cs231n.fast_layers import *
-from pset2.cs231n.layer_utils import *
+from cs231n.layers import *
+from cs231n.fast_layers import *
+from cs231n.layer_utils import *
 
 
 class ThreeLayerConvNet(object):
@@ -63,10 +63,10 @@ class ThreeLayerConvNet(object):
 
     def loss(self, X, y=None):
         """
-    Evaluate loss and gradient for the three-layer convolutional network.
-    
-    Input / output: Same API as TwoLayerNet in fc_net.py.
-    """
+        Evaluate loss and gradient for the three-layer convolutional network.
+
+        Input / output: Same API as TwoLayerNet in fc_net.py.
+        """
         W1, b1 = self.params['W1'], self.params['b1']
         W2, b2 = self.params['W2'], self.params['b2']
         W3, b3 = self.params['W3'], self.params['b3']
@@ -84,7 +84,9 @@ class ThreeLayerConvNet(object):
         # computing the class scores for X and storing them in the scores          #
         # variable.                                                                #
         ############################################################################
-        pass
+        crpa, crpa_cache = conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+        ar, ar_cache = affine_relu_forward(crpa, W2, b2)
+        scores, out_cache = affine_forward(ar, W3, b3)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -99,7 +101,17 @@ class ThreeLayerConvNet(object):
         # data loss using softmax, and make sure that grads[k] holds the gradients #
         # for self.params[k]. Don't forget to add L2 regularization!               #
         ############################################################################
-        pass
+        loss, dout = softmax_loss(scores, y)
+        dout, grads['W3'], grads['b3'] = affine_backward(dout, out_cache)
+        dout, grads['W2'], grads['b2'] = affine_relu_backward(dout, ar_cache)
+        _, grads['W1'], grads['b1'] = conv_relu_pool_backward(dout, crpa_cache)
+
+        loss += self.reg * 0.5 * (np.sum(self.params['W1'] ** 2) +
+                                  np.sum(self.params['W2'] ** 2) +
+                                  np.sum(self.params['W3'] ** 2))
+        grads['W3'] = grads['W3'] + self.reg * self.params['W3']
+        grads['W2'] = grads['W2'] + self.reg * self.params['W2']
+        grads['W1'] = grads['W1'] + self.reg * self.params['W1']
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################

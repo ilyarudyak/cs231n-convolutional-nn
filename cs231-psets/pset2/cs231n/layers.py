@@ -440,14 +440,23 @@ def max_pool_forward_naive(x, pool_param):
     - out: Output data
     - cache: (x, pool_param)
     """
-    out = None
+    N, C, H, W = x.shape
+    ph, pw, s = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    C_out, H_out, W_out = C, (H - ph) / s + 1, (W - pw) / s + 1
+    out = np.zeros((N, C_out, H_out, W_out))
     #############################################################################
     # TODO: Implement the max pooling forward pass                              #
     #############################################################################
-    pass
+    for n in range(N):
+        for c in range(C_out):
+            for h in range(H_out):
+                for w in range(W_out):
+                    image_slice = x[n, c, (h*s):(h*s+ph), (w*s):(w*s+pw)]
+                    out[n, c, h, w] = np.max(image_slice)
     #############################################################################
     #                             END OF YOUR CODE                              #
     #############################################################################
+    print out[N-1, C-1, :, :]
     cache = (x, pool_param)
     return out, cache
 

@@ -1,8 +1,8 @@
 import numpy as np
 
-from cs231n.layers import *
-from cs231n.fast_layers import *
-from cs231n.layer_utils import *
+from pset2.cs231n.layers import *
+from pset2.cs231n.fast_layers import *
+from pset2.cs231n.layer_utils import *
 
 
 class ThreeLayerConvNet(object):

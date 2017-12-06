@@ -8,6 +8,7 @@ except ImportError:
   print 'You may also need to restart your iPython kernel'
 
 from cs231n.im2col import *
+from cs231.im2col_cython import *
 
 
 def conv_forward_im2col(x, w, b, conv_param):

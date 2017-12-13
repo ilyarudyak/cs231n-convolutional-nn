@@ -162,26 +162,30 @@ def rnn_backward(dh, cache):
 
 def word_embedding_forward(x, W):
     """
-  Forward pass for word embeddings. We operate on minibatches of size N where
-  each sequence has length T. We assume a vocabulary of V words, assigning each
-  to a vector of dimension D.
-  
-  Inputs:
-  - x: Integer array of shape (N, T) giving indices of words. Each element idx
-    of x muxt be in the range 0 <= idx < V.
-  - W: Weight matrix of shape (V, D) giving word vectors for all words.
-  
-  Returns a tuple of:
-  - out: Array of shape (N, T, D) giving word vectors for all input words.
-  - cache: Values needed for the backward pass
-  """
-    out, cache = None, None
+    Forward pass for word embeddings. We operate on mini-batches of size N where
+    each sequence has length T. We assume a vocabulary of V words, assigning each
+    to a vector of dimension D.
+
+    Inputs:
+    - x: Integer array of shape (N, T) giving indices of words. Each element idx
+    of x must be in the range 0 <= idx < V.
+    - W: Weight matrix of shape (V, D) giving word vectors for all words.
+
+    Returns a tuple of:
+    - out: Array of shape (N, T, D) giving word vectors for all input words.
+    - cache: Values needed for the backward pass
+    """
+    N, T = x.shape
+    _, D = W.shape
+    out, cache = np.zeros((N, T, D)), (x, W.shape)
     ##############################################################################
     # TODO: Implement the forward pass for word embeddings.                      #
     #                                                                            #
     # HINT: This should be very simple.                                          #
     ##############################################################################
-    pass
+    for n in range(N):
+        for t in range(T):
+            out[n, t, :] = W[x[n, t], :]
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################

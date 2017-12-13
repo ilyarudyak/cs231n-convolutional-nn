@@ -176,8 +176,8 @@ def word_embedding_forward(x, W):
     - cache: Values needed for the backward pass
     """
     N, T = x.shape
-    _, D = W.shape
-    out, cache = np.zeros((N, T, D)), (x, W.shape)
+    V, D = W.shape
+    out, cache = np.zeros((N, T, D)), (x, (V, D))
     ##############################################################################
     # TODO: Implement the forward pass for word embeddings.                      #
     #                                                                            #
@@ -185,7 +185,7 @@ def word_embedding_forward(x, W):
     ##############################################################################
     for n in range(N):
         for t in range(T):
-            out[n, t, :] = W[x[n, t], :]
+            out[n, t, :] += W[x[n, t], :]
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -194,26 +194,27 @@ def word_embedding_forward(x, W):
 
 def word_embedding_backward(dout, cache):
     """
-  Backward pass for word embeddings. We cannot back-propagate into the words
-  since they are integers, so we only return gradient for the word embedding
-  matrix.
-  
-  HINT: Look up the function np.add.at
-  
-  Inputs:
-  - dout: Upstream gradients of shape (N, T, D)
-  - cache: Values from the forward pass
-  
-  Returns:
-  - dW: Gradient of word embedding matrix, of shape (V, D).
-  """
-    dW = None
+    Backward pass for word embeddings. We cannot back-propagate into the words
+    since they are integers, so we only return gradient for the word embedding
+    matrix.
+
+    HINT: Look up the function np.add.at
+
+    Inputs:
+    - dout: Upstream gradients of shape (N, T, D)
+    - cache: Values from the forward pass
+
+    Returns:
+    - dW: Gradient of word embedding matrix, of shape (V, D).
+    """
+    x, (V, D) = cache
+    dW = np.zeros((V, D))
     ##############################################################################
     # TODO: Implement the backward pass for word embeddings.                     #
     #                                                                            #
     # HINT: Look up the function np.add.at                                       #
     ##############################################################################
-    pass
+    np.add.at(dW, x, dout)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
